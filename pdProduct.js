@@ -2,6 +2,7 @@ import { LightningElement, api, wire, track } from 'lwc';
 import { getRecord } from 'lightning/uiRecordApi';
 import getPicklistValues from '@salesforce/apex/ProductConfigurationWizardCtrl.getPicklistValues';
 
+// Import Labels (Keeping your imports)
 import productSearchBarLabel from '@salesforce/label/c.ProductSearchBarLabel';
 import supplyAttributesLabel from '@salesforce/label/c.SupplyAttributesLabel';
 import touTariffs from '@salesforce/label/c.touTariffs';
@@ -20,23 +21,35 @@ import previousSupplier from '@salesforce/label/c.PreviousSupplier';
 import priceType from '@salesforce/label/c.PriceType';
 import contractDuration from '@salesforce/label/c.ContractDuration';
 
-const FIELDS = [
-    "Product2.BillDeliveryMethod__c", 
-    "Product2.BillingFrequency__c",
-    "Product2.UseType__c",
-    "Product2.Residence__c",
-    "Product2.PowerCapacity__c",
-    "Product2.PaymentMethod__c",
-    "Product2.TouNumber__c",
-    "Product2.Consumption__c",
-    "Product2.CustomerAge__c",
-    "Product2.Counter2G__c",
-    "Product2.DurationWithPreviousSupplier__c",
-    "Product2.SourceMarket__c",
-    "Product2.ContractDuration__c",
-    "Product2.PriceType__c",
-    "Product2.PreviousSupplier__c",
-    ];
+// Configuration for Fields to reduce switch/case complexity
+const FIELD_MAPPING = {
+    // SF Field API Name : Local State Key
+    "BillDeliveryMethod__c": "billDeliveryMethod",
+    "BillingFrequency__c": "billingFrequency",
+    "UseType__c": "useType",
+    "Residence__c": "residence",
+    "PowerCapacity__c": "powerCapacity",
+    "PaymentMethod__c": "paymentMethod",
+    "TouNumber__c": "touNumber",
+    "Consumption__c": "consumption",
+    "CustomerAge__c": "customerAge",
+    "Counter2G__c": "counter2G",
+    "DurationWithPreviousSupplier__c": "durationWithPreviousSupplier",
+    "SourceMarket__c": "sourceMarket",
+    "ContractDuration__c": "contractDuration",
+    "PriceType__c": "priceType",
+    "PreviousSupplier__c": "previousSupplier"
+};
+
+const FIELDS = Object.keys(FIELD_MAPPING).map(key => `Product2.${key}`);
+
+const REQUIRED_FIELDS = [
+    "useType", "consumption", "billingFrequency", "paymentMethod", 
+    "billDeliveryMethod", "customerAge", "durationWithPreviousSupplier", 
+    "sourceMarket", "previousSupplier", "residence", "priceType", "contractDuration"
+];
+
+const REQUIRED_FIELDS_EE = ["touNumber", "counter2G", "powerCapacity"];
 
 export default class PdProduct extends LightningElement {
 
@@ -44,334 +57,225 @@ export default class PdProduct extends LightningElement {
     @api productId;
     @api isEdit;
 
-    @api
-    populate(state){
-        // debugger
-        this.retrievePicklistValues(state);
-    }
-
-    @api
-    invalidInput(){
-        // return true;
-        let invalid = this.localState.useType.trim().length === 0 ||
-        this.consumptionCollection.trim().length === 0 ||
-        this.billingFrequencyCollection.trim().length === 0 ||
-        this.paymentMethodCollection.trim().length === 0 ||
-        this.billDeliveryMethodCollection.trim().length === 0 || 
-        this.customerAgeCollection.trim().length === 0 || 
-        this.durationWithPreviousSupplierCollection.trim().length === 0 || 
-        this.sourceMarketCollection.trim().length === 0 || 
-        this.previousSupplierCollection.trim().length === 0 ||
-        this.residenceCollection.trim().length === 0 ||
-        this.localState.priceType.length === 0 ||
-        this.localState.contractDuration.length === 0;
-        /* this.localState.residence.trim().length === 0 || */
-
-        if (this.commodityType === "EE"){
-            invalid = invalid ||
-            this.localState.touNumber.length === 0 ||
-            this.counter2GCollection.trim().length === 0 ||
-            this.powerCapacityCollection.trim().length === 0;
-        }
-        return invalid;
-    }
-
-    @wire(getRecord, { recordId: "$productId", fields: FIELDS})
-    wiredRecord({error, data}){
-        if (data) {
-            if (this.commodityType === "EE"){
-                this.handleInputChange(this.passer(data.fields.TouNumber__c.value, "touNumber"))
-                this.handleOnItemSelected(this.mplPasser(data.fields.Counter2G__c.value, "counter2G"))
-                this.handleOnItemSelected(this.mplPasser(data.fields.PowerCapacity__c.value, "powerCapacity"))
-            }
-            // console.log(data.fields);
-
-            this.handleInputChange(this.passer(data.fields.UseType__c.value, "useType"))
-            this.handleInputChange(this.passer(data.fields.ContractDuration__c.value, "contractDuration"))
-            this.handleInputChange(this.passer(data.fields.PriceType__c.value, "priceType"))        
-
-            this.handleOnItemSelected(this.mplPasser(data.fields.Consumption__c.value, "consumption"))
-            this.handleOnItemSelected(this.mplPasser(data.fields.BillDeliveryMethod__c.value, "billDeliveryMethod"))
-            this.handleOnItemSelected(this.mplPasser(data.fields.BillingFrequency__c.value, "billingFrequency"))   
-            this.handleOnItemSelected(this.mplPasser(data.fields.PaymentMethod__c.value, "paymentMethod"))
-            this.handleOnItemSelected(this.mplPasser(data.fields.CustomerAge__c.value, "customerAge"))
-            this.handleOnItemSelected(this.mplPasser(data.fields.DurationWithPreviousSupplier__c.value, "durationWithPreviousSupplier"))
-            this.handleOnItemSelected(this.mplPasser(data.fields.SourceMarket__c.value, "sourceMarket"))
-            this.handleOnItemSelected(this.mplPasser(data.fields.PreviousSupplier__c.value, "previousSupplier")) 
-            this.handleOnItemSelected(this.mplPasser(data.fields.Residence__c.value, "residence"))
-
-            this.resetAllMultiPicklists();
-        }
-    }
-
-    @track localState = {
-        touNumber: "",
-        billingFrequency: "",
-        powerCapacity: "",
-        paymentMethod: "",
-        billDeliveryMethod: "",
-        residence: "",
-        useType: "Domestico",
-        consumption: "",
-        customerAge: "",
-        counter2G: "",
-        durationWithPreviousSupplier: "",
-        sourceMarket: "",
-        previousSupplier: "",
-        id: "",
-        priceType: "",
-        contractDuration: ""
-    };
+    @track localState = this.getInitialState();
+    
+    // Consolidate all options into one object
+    @track optionsMap = {}; 
+    // Store raw API responses to reset easily
+    _rawOptions = {};
 
     isLoading = false;
     loadComplete = false;
 
     labels = {
-        productSearchBarLabel,
-        supplyAttributesLabel,
-        touTariffs,
-        powerCapacity,
-        residence,
-        useType,
-        billingFrequency,
-        paymentMethod,
-        billDeliveryMethod,
-        consumption,
-        customerAge,
-        counter2G,
-        durationWithPreviousSupplier,
-        sourceMarket,
-        previousSupplier,
-        priceType,
-        contractDuration
-    }
+        productSearchBarLabel, supplyAttributesLabel, touTariffs, powerCapacity,
+        residence, useType, billingFrequency, paymentMethod, billDeliveryMethod,
+        consumption, customerAge, counter2G, durationWithPreviousSupplier,
+        sourceMarket, previousSupplier, priceType, contractDuration
+    };
 
-    billingFrequencyCollection = "";
-    powerCapacityCollection = "";
-    paymentMethodCollection = "";
-    billDeliveryMethodCollection = "";
-    customerAgeCollection = "";
-    durationWithPreviousSupplierCollection = "";
-    sourceMarketCollection = "";
-    previousSupplierCollection = "";
-    consumptionCollection = "";
-    counter2GCollection = "";
-    residenceCollection = "";
-    
     connectedCallback() {
         this.dispatchEvent(new CustomEvent('productready', { bubbles: true, composed: true }));
-        // debugger;
-        // console.log('isEdit:',this.isEdit)
-        if (!this.isEdit){
-            this.retrievePicklistValues({isCreate : true});
+        if (!this.isEdit) {
+            this.retrievePicklistValues({ isCreate: true });
         }
     }
 
-    async retrievePicklistValues(state) {
+    getInitialState() {
+        return {
+            touNumber: "", billingFrequency: "", powerCapacity: "", paymentMethod: "",
+            billDeliveryMethod: "", residence: "", useType: "Domestico", consumption: "",
+            customerAge: "", counter2G: "", durationWithPreviousSupplier: "", sourceMarket: "",
+            previousSupplier: "", id: "", priceType: "", contractDuration: ""
+        };
+    }
+
+    // --- API Methods ---
+
+    @api
+    populate(state) {
+        this.retrievePicklistValues(state);
+    }
+
+    @api
+    invalidInput() {
+        // Validate Generic Fields
+        let invalid = REQUIRED_FIELDS.some(field => {
+            const val = this.localState[field];
+            return !val || (Array.isArray(val) && val.length === 0) || (typeof val === 'string' && val.trim().length === 0);
+        });
+
+        // Validate EE Specific Fields
+        if (this.commodityType === "EE") {
+            const invalidEE = REQUIRED_FIELDS_EE.some(field => {
+                const val = this.localState[field];
+                return !val || (Array.isArray(val) && val.length === 0) || (typeof val === 'string' && val.trim().length === 0);
+            });
+            invalid = invalid || invalidEE;
+        }
+
+        return invalid;
+    }
+
+    // --- Data Loading ---
+
+    @wire(getRecord, { recordId: "$productId", fields: FIELDS })
+    wiredRecord({ error, data }) {
+        if (data) {
+            const newState = {};
+            // Map Salesforce fields to Local State using the config map
+            Object.keys(FIELD_MAPPING).forEach(sfField => {
+                if (data.fields[sfField] && data.fields[sfField].value != null) {
+                    const localKey = FIELD_MAPPING[sfField];
+                    let val = data.fields[sfField].value;
+                    
+                    // If it's a multi-picklist (contains semicolon), split it
+                    if (typeof val === 'string' && val.includes(';')) {
+                         val = val.split(';');
+                    } else if (typeof val === 'string') {
+                        // Keep simple strings as is
+                    }
+                    
+                    newState[localKey] = val;
+                }
+            });
+            
+            // Merge into local state
+            this.localState = { ...this.localState, ...newState };
+            
+            // Refresh the UI selections
+            this.syncOptionsWithState();
+            this.updateParent();
+        }
+    }
+
+    async retrievePicklistValues(state = {}) {
         this.isLoading = true;
         try {
-            // Simulate a call to retrieve picklist values
             const res = await getPicklistValues();
-            this.consumptionOptions = res.consumptionTypes.map((item, index) => ({ key: index + 1, value: item.value, label: item.label }));
-            this.consumptionOptionsReset = JSON.parse(JSON.stringify(this.consumptionOptions))
+            
+            // Transform APEX response to standard Option format {label, value, key}
+            const transform = (arr) => arr ? arr.map((item, index) => ({ key: index + 1, value: item.value, label: item.label, selected: false })) : [];
+            const transformSimple = (arr) => arr ? arr.map(item => ({ label: item.label, value: item.value })) : [];
 
-            this.counter2GOptions = res.counter2GTypes.map((item, index) => ({ key: index + 1, value: item.value, label: item.label }));
-            this.counter2GOptionsReset = JSON.parse(JSON.stringify(this.counter2GOptions))
+            // Store raw options for resetting later
+            this._rawOptions = {
+                consumption: transform(res.consumptionTypes),
+                counter2G: transform(res.counter2GTypes),
+                billingFrequency: transform(res.billingFrequencies),
+                powerCapacity: transform(res.powerCapacities),
+                paymentMethod: transform(res.paymentMethods),
+                billDeliveryMethod: transform(res.billDeliveryMethods),
+                customerAge: transform(res.customerAges),
+                durationWithPreviousSupplier: transform(res.durationWithPreviousSuppliers),
+                sourceMarket: transform(res.sourceMarkets),
+                residence: transform(res.residences),
+                previousSupplier: transform(res.previousSuppliers),
+                // Simple Combobox options
+                touNumber: transformSimple(res.touNumberOptions),
+                useType: transformSimple(res.useTypeOptions),
+                contractDuration: transformSimple(res.contractDurations),
+                priceType: transformSimple(res.priceTypes)
+            };
 
-            this.billingFrequencyOptions = res.billingFrequencies.map((item, index) => ({ key: index + 1, value: item.value, label: item.label }));
-            this.billingFrequencyOptionsReset = JSON.parse(JSON.stringify(this.billingFrequencyOptions))
+            // Initialize active options map
+            this.optionsMap = JSON.parse(JSON.stringify(this._rawOptions));
 
-            this.powerCapacityOptions = res.powerCapacities.map((item, index) => ({ key: index + 1, value: item.value, label: item.label }));
-            this.powerCapacityOptionsReset = JSON.parse(JSON.stringify(this.powerCapacityOptions))
-
-            this.paymentMethodOptions = res.paymentMethods.map((item, index) => ({ key: index + 1, value: item.value, label: item.label }));
-            this.paymentMethodOptionsReset = JSON.parse(JSON.stringify(this.paymentMethodOptions))
-
-            this.billDeliveryMethodOptions = res.billDeliveryMethods.map((item, index) => ({ key: index + 1, value: item.value, label: item.label }));
-            this.billDeliveryMethodOptionsReset = JSON.parse(JSON.stringify(this.billDeliveryMethodOptions))
-
-            this.customerAgeOptions = res.customerAges.map((item, index) => ({ key: index + 1, value: item.value, label: item.label }));
-            this.customerAgeOptionsReset = JSON.parse(JSON.stringify(this.customerAgeOptions))
-
-            this.durationWithPreviousSupplierOptions = res.durationWithPreviousSuppliers.map((item, index) => ({ key: index + 1, value: item.value, label: item.label }));
-            this.durationWithPreviousSupplierOptionsReset = JSON.parse(JSON.stringify(this.durationWithPreviousSupplierOptions))
-
-            this.sourceMarketOptions = res.sourceMarkets.map((item, index) => ({ key: index + 1, value: item.value, label: item.label }));
-            this.sourceMarketOptionsReset = JSON.parse(JSON.stringify(this.sourceMarketOptions))
-
-            this.residenceOptions = res.residences.map((item, index) => ({ key: index + 1, value: item.value, label: item.label }));
-            this.residenceOptionsReset = JSON.parse(JSON.stringify(this.residenceOptions))
-
-            this.previousSupplierOptions = res.previousSuppliers.map((item, index) => ({ key: index + 1, value: item.value, label: item.label }));
-            this.previousSupplierOptionsReset = JSON.parse(JSON.stringify(this.previousSupplierOptions));
-
-            this.touNumberOptions = res.touNumberOptions.map(item => ({ value: item.value, label: item.label }));
-            this.useTypeOptions = res.useTypeOptions.map(item => ({ value: item.value, label: item.label }));
-            this.contractDurationOptions = res.contractDurations.map(item => ({ label: item.label, value: item.value }));
-            this.priceTypeOptions = res.priceTypes.map(item => ({ label: item.label, value: item.value }));
-
-            if(!state.isCreate){
-                this.initializeFields(state);
+            if (!state.isCreate) {
+                // Merge incoming state
+                this.localState = { ...this.localState, ...state };
+                this.syncOptionsWithState();
             }
+            
             this.loadComplete = true;
         } catch (error) {
-            console.error('Error retrieving picklist values:', JSON.stringify(error));
+            console.error('Error retrieving picklist values:', error);
         } finally {
             this.isLoading = false;
         }
-    } 
-
-    initializeFields(state){
-        console.log('Initialize products', JSON.stringify(state));
-        if (this.commodityType === "EE"){
-            this.handleInputChange(this.passer(state.touNumber, "touNumber"))
-            this.handleOnItemSelected(this.mplPasser(state.counter2G.join(";"), "counter2G"))
-            this.handleOnItemSelected(this.mplPasser(state.powerCapacity.join(";"), "powerCapacity"))
-        }
-        // console.log(data.fields);
-
-        this.handleOnItemSelected(this.mplPasser(state.consumption.join(";"), "consumption"))
-        this.handleInputChange(this.passer(state.useType, "useType"))
-        this.handleInputChange(this.passer(state.id, "id"))
-        this.handleInputChange(this.passer(state.contractDuration, "contractDuration"))
-        this.handleInputChange(this.passer(state.priceType, "priceType"))
-        
-        this.handleOnItemSelected(this.mplPasser(state.billDeliveryMethod.join(";"), "billDeliveryMethod"))
-        this.handleOnItemSelected(this.mplPasser(state.billingFrequency.join(";"), "billingFrequency"))   
-        this.handleOnItemSelected(this.mplPasser(state.paymentMethod.join(";"), "paymentMethod"))
-        this.handleOnItemSelected(this.mplPasser(state.customerAge.join(";"), "customerAge"))
-        this.handleOnItemSelected(this.mplPasser(state.durationWithPreviousSupplier.join(";"), "durationWithPreviousSupplier"))
-        this.handleOnItemSelected(this.mplPasser(state.sourceMarket.join(";"), "sourceMarket"))
-        this.handleOnItemSelected(this.mplPasser(state.previousSupplier.join(";"), "previousSupplier"))          
-        this.handleOnItemSelected(this.mplPasser(state.residence.join(";"), "residence"))
     }
 
-    handleLookupChange(event){
-        this.productId = event.detail.id;
-    }
+    // --- State Synchronization ---
 
-    mplPasser(value, field){
-        let vals = value.split(";");
+    /**
+     * Iterates over current localState and marks the corresponding options as selected
+     * in the optionsMap for the Multi-Pick-List components.
+     */
+    syncOptionsWithState() {
+        Object.keys(this.optionsMap).forEach(key => {
+            // Only process if it's a multi-select list (has 'key' property in items)
+            if (this.optionsMap[key].length > 0 && this.optionsMap[key][0].hasOwnProperty('key')) {
+                
+                const currentStateVal = this.localState[key];
+                // Ensure current value is an array for comparison
+                const selectedValues = Array.isArray(currentStateVal) ? currentStateVal : (currentStateVal ? [currentStateVal] : []);
 
-        // Workaround to use child functionality from parent
-        // We set again the options of the field, but with selected the ones we want
-        // Then we refresh so it appears on UI
-        // Then we reset to default values and when submit, it will reset the view.
-
-        let retVal = [...this[field+"Options"]]
-
-        const changedElements = [];
-
-        // For the received values, set them selected true
-        retVal.forEach((item)=>{
-            if (vals.includes(item.value)){
-                item.selected = true;
-                changedElements.push({...item});
+                // Map over options and set 'selected'
+                this.optionsMap[key] = this._rawOptions[key].map(opt => ({
+                    ...opt,
+                    selected: selectedValues.includes(opt.value)
+                }));
             }
-        })
+        });
 
-        const multiPickLists = this.template.querySelectorAll('c-multi-pick-list');
-        multiPickLists.forEach(item=> item.onRefreshClick());
-
-        // this[field+"Options"] = JSON.parse(JSON.stringify(this[field+"OptionsReset"]))
-
-        return {
-                "detail": [...changedElements],
-                "target": {
-                    "name": field
-                }
-            }
+        // Trigger refresh on child components if they require imperative method call
+        // setTimeout ensures DOM is rendered if this is called during load
+        setTimeout(() => {
+            const multiPickLists = this.template.querySelectorAll('c-multi-pick-list');
+            multiPickLists.forEach(item => item.onRefreshClick());
+        }, 0);
     }
 
+    // --- Event Handlers ---
 
-    passer(value, field){
-        return {
-                "detail": {
-                    "value": value
-                },
-                "target": {
-                    "name": field
-                }
-            }
-    }
-    
-    updateState(field, value){
-        this.localState[field] = value;
-        this.updateParent();
+    handleLookupChange(event) {
+        this.productId = event.detail.id; // Triggers @wire
     }
 
-    updateParent(){
-        this.dispatchEvent(new CustomEvent('changestate', {
-                detail: this.localState
-            }));
-    }
-
-    handleInputChange(event){
-        this.updateState(event.target.name, event.detail.value);
+    handleInputChange(event) {
+        const field = event.target.name;
+        const value = event.detail.value;
+        this.updateState(field, value);
     }
 
     handleOnItemSelected(event) {
         if (event.detail) {
-            this[event.target.name + "Collection"] = '';
-            let self = this;
-            
-            event.detail.forEach (function (eachItem) {
-                    // console.log (eachItem.value);
-                    self[event.target.name + "Collection"] += eachItem.value + ', ';
-            });
-
-            this.updateState(event.target.name, this[event.target.name + "Collection"].trim().slice(0, -1).split(",").map(item => item.trim()))
-
-            // Array: JSON.stringify(this.selectedProcesses.trim().slice(0, -1).split(",").map(item => item.trim()))
+            const field = event.target.name;
+            // Extract values from the detail array objects
+            const values = event.detail.map(item => item.value);
+            this.updateState(field, values);
         }
     }
 
-    clearForm(){
-        const multiPickLists = this.template.querySelectorAll('c-multi-pick-list');
-        multiPickLists.forEach(item=> item.onRefreshClick());
-
-        this.localState = {
-            touNumber: "Monoraria",
-            billingFrequency: "",
-            powerCapacity: "",
-            paymentMethod: "",
-            billDeliveryMethod: "",
-            residence: "",
-            useType: "Domestico",
-            consumption: "",
-            customerAge: "",
-            counter2G: "",
-            durationWithPreviousSupplier: "",
-            sourceMarket: "",
-            previousSupplier: "",
-            priceType: "",
-            contractDuration: ""  
-        };
+    updateState(field, value) {
+        this.localState = { ...this.localState, [field]: value };
+        this.updateParent();
     }
 
-    resetAllMultiPicklists(){
-        // for (let field in Object.keys(this.localState)){
-        //     this[field+"Options"] = JSON.parse(JSON.stringify(this[field+"OptionsReset"]))
-        // }
-
-        this.billingFrequencyOptions = JSON.parse(JSON.stringify(this.billingFrequencyOptionsReset))
-        this.powerCapacityOptions = JSON.parse(JSON.stringify(this.powerCapacityOptionsReset))
-        this.paymentMethodOptions = JSON.parse(JSON.stringify(this.paymentMethodOptionsReset))
-        this.billDeliveryMethodOptions = JSON.parse(JSON.stringify(this.billDeliveryMethodOptionsReset))
-        this.customerAgeOptions = JSON.parse(JSON.stringify(this.customerAgeOptionsReset))
-        this.durationWithPreviousSupplierOptions = JSON.parse(JSON.stringify(this.durationWithPreviousSupplierOptionsReset))
-        this.sourceMarketOptions = JSON.parse(JSON.stringify(this.sourceMarketOptionsReset))
-        this.previousSupplierOptions = JSON.parse(JSON.stringify(this.previousSupplierOptionsReset))
-        this.consumptionOptions = JSON.parse(JSON.stringify(this.consumptionOptionsReset))
-        this.counter2GOptions = JSON.parse(JSON.stringify(this.counter2GOptionsReset))
-        this.residenceOptions = JSON.parse(JSON.stringify(this.residenceOptionsReset))
+    updateParent() {
+        this.dispatchEvent(new CustomEvent('changestate', {
+            detail: this.localState
+        }));
     }
+
+    clearForm() {
+        this.localState = this.getInitialState();
+        this.optionsMap = JSON.parse(JSON.stringify(this._rawOptions)); // Reset options
+        
+        // Refresh children
+        setTimeout(() => {
+            const multiPickLists = this.template.querySelectorAll('c-multi-pick-list');
+            multiPickLists.forEach(item => item.onRefreshClick());
+        }, 0);
+    }
+
+    // --- Getters ---
 
     get recordTypeFilter() {
-        return "RecordType.Name = 'Parent' AND ProductType__c = '" + this.commodityType + "'"; 
+        return `RecordType.Name = 'Parent' AND ProductType__c = '${this.commodityType}'`;
     }
 
-    get powerDisable(){
-        return this.commodityType === "GAS"
+    get powerDisable() {
+        return this.commodityType === "GAS";
     }
 }
