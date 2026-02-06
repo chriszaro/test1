@@ -6,108 +6,95 @@ import configurePowerLabel from '@salesforce/label/c.ConfigurePowerLabel';
 import configureGasLabel from '@salesforce/label/c.ConfigureGasLabel';
 
 export default class PdProducts extends LightningElement {
-    @api state;
-    @api stateId;
-
-    initialized = false;
-    _globalContext;
-    @api set globalContext(value) {
-        this._globalContext = value;
-
-        if (!this.initialized && value != undefined && value.products) {
-            this.localState = this.copyToFrom(this.localState, value);
-        }
-        if (value != undefined) { 
-            this.initialized = true
-            if (value.products) this.isEdit = true;
-        };
-    };
-    get globalContext() {
-        return this._globalContext;
-    }
-
-    @api get invalidInput() {
-        let invalid = true;
-        const el = this.template.querySelectorAll('c-pd-product');
-        if (el.length === 1) {
-            invalid = el[0].invalidInput();
-        }
-        else if (el.length === 2) {
-            invalid = el[0].invalidInput() || el[1].invalidInput();
-        }
-        return invalid;
-    }
-
     @track localState = {
-        EE: "",
-        GAS: "",
+        EE: {},
+        GAS: {},
     };
-    
+
+    _globalContext;
+    initialized = false;
+    firstChildLoad = true;
+    isEdit = false;
+    _commodity;
+
     labels = {
         backButton,
         nextButton,
         configureProductsLabel,
         configurePowerLabel,
         configureGasLabel
+    };
+
+    @api
+    get globalContext() {
+        return this._globalContext;
     }
 
-    _commodity;
-
-    firstChildLoad = true;
-
-    isEdit;
-
-    loadStateRecord(source) {
-        console.log("Started loading from", source);
-        try {
-            const tempState = { ...this.globalContext }
-            if (tempState.products) {
-                const elements = this.template.querySelectorAll("c-pd-product");
-                for (let el of elements) {
-                    el.populate({ ...(tempState.products[el.commodityType]), isCreate: false });
-                }
+    set globalContext(value) {
+        this._globalContext = value;
+        
+        if (value) {
+            this._commodity = value.commodity; // Set commodity immediately
+            
+            // Check if we are in edit mode (products exist)
+            if (value.products) {
+                this.isEdit = true;
+                // Merge incoming products into local state
+                this.localState = { ...this.localState, ...value.products };
             }
-            this._commodity = this.globalContext.commodity;
-            console.log("Finished loading from", source);
-        } catch (error) {
-            console.log("Error while loading from", source)
+            this.initialized = true;
         }
     }
 
-    handleCpmReady() {
-        // console.log("Child Handler")
-        if (this.firstChildLoad) {
+    @api
+    get invalidInput() {
+        // Query all child components and check their validity
+        const children = Array.from(this.template.querySelectorAll('c-pd-product'));
+        // If any child returns true for invalidInput, the whole form is invalid
+        return children.some(child => child.invalidInput());
+    }
+
+    // --- Event Handlers ---
+
+    handleCpmReady(event) {
+        // This handler ensures that when children are rendered, they get populated
+        // We only push data down once per load to avoid overwriting user edits
+        if (this.firstChildLoad && this.isEdit) {
             this.firstChildLoad = false;
-            this.loadStateRecord("Child Handler");
-        }
-
-        const accordionSections = this.template.querySelectorAll("lightning-accordion-section");
-        if (accordionSections.length == 2) {
-            const tempState = { ...this.globalContext }
-            if (tempState.products) {
-                const elements = this.template.querySelectorAll("c-pd-product");
-                const el = elements[1];
-                el.populate({ ...(tempState.products[el.commodityType]), isCreate: false });
-            }
+            this.pushStateToChildren();
         }
     }
 
     handleStateChange(event) {
-        this.localState[event.target.commodityType] = { ...event.detail }
+        const type = event.target.commodityType;
+        const newState = event.detail;
+
+        // Update local state and notify parent
+        this.localState = {
+            ...this.localState,
+            [type]: newState
+        };
+
         this.updateParent();
+    }
+
+    // --- Helpers ---
+
+    pushStateToChildren() {
+        // Dynamically find children and populate them
+        const elements = this.template.querySelectorAll("c-pd-product");
+        elements.forEach(el => {
+            const prodState = this.localState[el.commodityType];
+            if (prodState) {
+                el.populate({ ...prodState, isCreate: false });
+            }
+        });
     }
 
     updateParent() {
         this.dispatchEvent(new CustomEvent('changestate', {
             detail: { products: this.localState }
         }));
-    }
-
-    copyToFrom(localState, source) {
-        const picked = Object.fromEntries(
-            Object.keys(localState).map(k => [k, source.hasOwnProperty(k) ? source[k] : localState[k]])
-        );
-        return { ...localState, ...picked };
     }
 
     get com() {
