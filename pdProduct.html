@@ -1,0 +1,180 @@
+<template>
+    <lightning-card hide-header>
+
+        <div class="slds-m-vertical_x-large slds-p-horizontal_small">
+            <label for="search">{labels.productSearchBarLabel}</label><br>
+            <c-cpq-look-up-field obj-name="Product2" icon-name="custom:custom57"
+                onlookupselected={handleLookupChange} id='search' filter={recordTypeFilter} onremovepill={clearForm}></c-cpq-look-up-field>
+        </div>
+
+        <template if:true={isLoading}>
+            <lightning-spinner
+                alternative-text="Loading..."
+                size="medium">
+            </lightning-spinner>
+        </template>
+    
+        <hr>
+        <template lwc:if={loadComplete}>
+            <lightning-layout multiple-rows="true">
+                <lightning-layout-item size="12" class="slds-p-around_small">
+                    <h2 class="slds-text-heading_medium">{labels.supplyAttributesLabel}</h2>
+                </lightning-layout-item>
+                <template if:false={powerDisable}>
+                    <lightning-layout-item size="4" padding="horizontal-small">
+                        <lightning-combobox 
+                            name="touNumber" 
+                            label={labels.touTariffs}
+                            value={localState.touNumber} 
+                            options={touNumberOptions}
+                            onchange={handleInputChange}>
+                        </lightning-combobox>
+                    </lightning-layout-item>
+                </template>
+
+                <template if:false={powerDisable}>
+                    <lightning-layout-item size="4" padding="horizontal-small">
+                        <c-multi-pick-list 
+                            name="powerCapacity"
+                            label={labels.powerCapacity}
+                            options={powerCapacityOptions}  
+                            onitemselected={handleOnItemSelected}>
+                        </c-multi-pick-list>
+                    </lightning-layout-item>
+                </template>
+
+                <lightning-layout-item size="4" padding="horizontal-small">
+                        <c-multi-pick-list 
+                            name="residence"
+                            label={labels.residence}
+                            options={residenceOptions}  
+                            onitemselected={handleOnItemSelected}>
+                        </c-multi-pick-list>
+                    </lightning-layout-item>
+                
+                <lightning-layout-item size="4" padding="horizontal-small">
+                    <lightning-combobox 
+                        name="useType" 
+                        label={labels.useType}
+                        value={localState.useType} 
+                        options={useTypeOptions}
+                        onchange={handleInputChange}>
+                    </lightning-combobox>
+                </lightning-layout-item>
+            </lightning-layout>
+            <lightning-layout multiple-rows="true" class="slds-p-top_medium">
+                <lightning-layout-item size="12" class="slds-p-around_small">
+                    <h2 class="slds-text-heading_medium">Attributi fatturazione</h2>
+                </lightning-layout-item>
+
+                <lightning-layout-item size="6" padding="horizontal-small">
+                    <lightning-combobox 
+                        name="contractDuration" 
+                        label={labels.contractDuration}
+                        value={localState.contractDuration} 
+                        options={contractDurationOptions}
+                        onchange={handleInputChange}>
+                    </lightning-combobox>
+                </lightning-layout-item>
+
+                <lightning-layout-item size="6" padding="horizontal-small">
+                    <lightning-combobox 
+                        name="priceType" 
+                        label={labels.priceType}
+                        value={localState.priceType} 
+                        options={priceTypeOptions}
+                        onchange={handleInputChange}>
+                    </lightning-combobox>
+                </lightning-layout-item>
+                <lightning-layout-item size="4" padding="horizontal-small">
+                    <c-multi-pick-list 
+                        name="billingFrequency"
+                        label={labels.billingFrequency}
+                        options={billingFrequencyOptions}  
+                        onitemselected={handleOnItemSelected}>
+                    </c-multi-pick-list>
+                </lightning-layout-item>
+                
+                <lightning-layout-item size="4" padding="horizontal-small">
+                    <c-multi-pick-list 
+                        name="paymentMethod"
+                        label={labels.paymentMethod}
+                        options={paymentMethodOptions}  
+                        onitemselected={handleOnItemSelected}>
+                    </c-multi-pick-list>
+                </lightning-layout-item>
+
+                <lightning-layout-item size="4" padding="horizontal-small">
+                    <c-multi-pick-list 
+                        name="billDeliveryMethod"
+                        label={labels.billDeliveryMethod} 
+                        options={billDeliveryMethodOptions}  
+                        onitemselected={handleOnItemSelected}>
+                    </c-multi-pick-list>
+                </lightning-layout-item>
+            </lightning-layout>
+            <lightning-layout multiple-rows="true" class="slds-p-top_medium">
+                <lightning-layout-item size="12" class="slds-p-around_small">
+                    <h2 class="slds-text-heading_medium">Attributi aggiuntivi</h2>
+                </lightning-layout-item>
+
+                <lightning-layout-item size="4" padding="horizontal-small">
+                    <c-multi-pick-list 
+                    name="consumption"
+                    label={labels.consumption} 
+                    options={consumptionOptions}  
+                    onitemselected={handleOnItemSelected}>
+                </c-multi-pick-list>
+                </lightning-layout-item>
+
+                <template if:false={powerDisable}>
+                    <lightning-layout-item size="4" padding="horizontal-small">
+                        <c-multi-pick-list 
+                        name="counter2G"
+                        label={labels.counter2G} 
+                        options={counter2GOptions}  
+                        onitemselected={handleOnItemSelected}>
+                    </c-multi-pick-list>
+                    </lightning-layout-item>
+                </template>
+
+                <lightning-layout-item size="4" padding="horizontal-small">
+                    <c-multi-pick-list 
+                        name="customerAge"
+                        label={labels.customerAge}
+                        options={customerAgeOptions}  
+                        onitemselected={handleOnItemSelected}>
+                    </c-multi-pick-list>
+                </lightning-layout-item> 
+
+                <lightning-layout-item size="4" padding="horizontal-small">
+                    <c-multi-pick-list 
+                        name="durationWithPreviousSupplier"
+                        label={labels.durationWithPreviousSupplier}
+                        options={durationWithPreviousSupplierOptions}  
+                        onitemselected={handleOnItemSelected}>
+                    </c-multi-pick-list>
+                </lightning-layout-item>
+
+                <lightning-layout-item size="4" padding="horizontal-small">
+                    <c-multi-pick-list 
+                        name="sourceMarket"
+                        label={labels.sourceMarket}
+                        options={sourceMarketOptions}
+                        onitemselected={handleOnItemSelected}>
+                    </c-multi-pick-list>
+                </lightning-layout-item>
+
+                <lightning-layout-item size="4" padding="horizontal-small">
+                    <c-multi-pick-list 
+                        name="previousSupplier"
+                        label={labels.previousSupplier}
+                        options={previousSupplierOptions}
+                        onitemselected={handleOnItemSelected}>
+                    </c-multi-pick-list>
+                </lightning-layout-item>
+            </lightning-layout>
+        </template>
+        
+    </lightning-card>
+</template>
