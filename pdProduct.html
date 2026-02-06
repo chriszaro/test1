@@ -8,10 +8,7 @@
         </div>
 
         <template if:true={isLoading}>
-            <lightning-spinner
-                alternative-text="Loading..."
-                size="medium">
-            </lightning-spinner>
+            <lightning-spinner alternative-text="Loading..." size="medium"></lightning-spinner>
         </template>
     
         <hr>
@@ -20,24 +17,23 @@
                 <lightning-layout-item size="12" class="slds-p-around_small">
                     <h2 class="slds-text-heading_medium">{labels.supplyAttributesLabel}</h2>
                 </lightning-layout-item>
+                
                 <template if:false={powerDisable}>
                     <lightning-layout-item size="4" padding="horizontal-small">
                         <lightning-combobox 
                             name="touNumber" 
                             label={labels.touTariffs}
                             value={localState.touNumber} 
-                            options={touNumberOptions}
+                            options={optionsMap.touNumber}
                             onchange={handleInputChange}>
                         </lightning-combobox>
                     </lightning-layout-item>
-                </template>
 
-                <template if:false={powerDisable}>
                     <lightning-layout-item size="4" padding="horizontal-small">
                         <c-multi-pick-list 
                             name="powerCapacity"
                             label={labels.powerCapacity}
-                            options={powerCapacityOptions}  
+                            options={optionsMap.powerCapacity}  
                             onitemselected={handleOnItemSelected}>
                         </c-multi-pick-list>
                     </lightning-layout-item>
@@ -47,7 +43,7 @@
                         <c-multi-pick-list 
                             name="residence"
                             label={labels.residence}
-                            options={residenceOptions}  
+                            options={optionsMap.residence}  
                             onitemselected={handleOnItemSelected}>
                         </c-multi-pick-list>
                     </lightning-layout-item>
@@ -57,11 +53,12 @@
                         name="useType" 
                         label={labels.useType}
                         value={localState.useType} 
-                        options={useTypeOptions}
+                        options={optionsMap.useType}
                         onchange={handleInputChange}>
                     </lightning-combobox>
                 </lightning-layout-item>
             </lightning-layout>
+
             <lightning-layout multiple-rows="true" class="slds-p-top_medium">
                 <lightning-layout-item size="12" class="slds-p-around_small">
                     <h2 class="slds-text-heading_medium">Attributi fatturazione</h2>
@@ -72,7 +69,7 @@
                         name="contractDuration" 
                         label={labels.contractDuration}
                         value={localState.contractDuration} 
-                        options={contractDurationOptions}
+                        options={optionsMap.contractDuration}
                         onchange={handleInputChange}>
                     </lightning-combobox>
                 </lightning-layout-item>
@@ -82,15 +79,16 @@
                         name="priceType" 
                         label={labels.priceType}
                         value={localState.priceType} 
-                        options={priceTypeOptions}
+                        options={optionsMap.priceType}
                         onchange={handleInputChange}>
                     </lightning-combobox>
                 </lightning-layout-item>
+
                 <lightning-layout-item size="4" padding="horizontal-small">
                     <c-multi-pick-list 
                         name="billingFrequency"
                         label={labels.billingFrequency}
-                        options={billingFrequencyOptions}  
+                        options={optionsMap.billingFrequency}  
                         onitemselected={handleOnItemSelected}>
                     </c-multi-pick-list>
                 </lightning-layout-item>
@@ -99,7 +97,7 @@
                     <c-multi-pick-list 
                         name="paymentMethod"
                         label={labels.paymentMethod}
-                        options={paymentMethodOptions}  
+                        options={optionsMap.paymentMethod}  
                         onitemselected={handleOnItemSelected}>
                     </c-multi-pick-list>
                 </lightning-layout-item>
@@ -108,11 +106,12 @@
                     <c-multi-pick-list 
                         name="billDeliveryMethod"
                         label={labels.billDeliveryMethod} 
-                        options={billDeliveryMethodOptions}  
+                        options={optionsMap.billDeliveryMethod}  
                         onitemselected={handleOnItemSelected}>
                     </c-multi-pick-list>
                 </lightning-layout-item>
             </lightning-layout>
+
             <lightning-layout multiple-rows="true" class="slds-p-top_medium">
                 <lightning-layout-item size="12" class="slds-p-around_small">
                     <h2 class="slds-text-heading_medium">Attributi aggiuntivi</h2>
@@ -120,21 +119,21 @@
 
                 <lightning-layout-item size="4" padding="horizontal-small">
                     <c-multi-pick-list 
-                    name="consumption"
-                    label={labels.consumption} 
-                    options={consumptionOptions}  
-                    onitemselected={handleOnItemSelected}>
-                </c-multi-pick-list>
+                        name="consumption"
+                        label={labels.consumption} 
+                        options={optionsMap.consumption}  
+                        onitemselected={handleOnItemSelected}>
+                    </c-multi-pick-list>
                 </lightning-layout-item>
 
                 <template if:false={powerDisable}>
                     <lightning-layout-item size="4" padding="horizontal-small">
                         <c-multi-pick-list 
-                        name="counter2G"
-                        label={labels.counter2G} 
-                        options={counter2GOptions}  
-                        onitemselected={handleOnItemSelected}>
-                    </c-multi-pick-list>
+                            name="counter2G"
+                            label={labels.counter2G} 
+                            options={optionsMap.counter2G}  
+                            onitemselected={handleOnItemSelected}>
+                        </c-multi-pick-list>
                     </lightning-layout-item>
                 </template>
 
@@ -142,7 +141,7 @@
                     <c-multi-pick-list 
                         name="customerAge"
                         label={labels.customerAge}
-                        options={customerAgeOptions}  
+                        options={optionsMap.customerAge}  
                         onitemselected={handleOnItemSelected}>
                     </c-multi-pick-list>
                 </lightning-layout-item> 
@@ -151,7 +150,7 @@
                     <c-multi-pick-list 
                         name="durationWithPreviousSupplier"
                         label={labels.durationWithPreviousSupplier}
-                        options={durationWithPreviousSupplierOptions}  
+                        options={optionsMap.durationWithPreviousSupplier}  
                         onitemselected={handleOnItemSelected}>
                     </c-multi-pick-list>
                 </lightning-layout-item>
@@ -160,7 +159,7 @@
                     <c-multi-pick-list 
                         name="sourceMarket"
                         label={labels.sourceMarket}
-                        options={sourceMarketOptions}
+                        options={optionsMap.sourceMarket}
                         onitemselected={handleOnItemSelected}>
                     </c-multi-pick-list>
                 </lightning-layout-item>
@@ -169,7 +168,7 @@
                     <c-multi-pick-list 
                         name="previousSupplier"
                         label={labels.previousSupplier}
-                        options={previousSupplierOptions}
+                        options={optionsMap.previousSupplier}
                         onitemselected={handleOnItemSelected}>
                     </c-multi-pick-list>
                 </lightning-layout-item>
