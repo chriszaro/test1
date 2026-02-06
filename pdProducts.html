@@ -1,0 +1,22 @@
+<template>
+    <lightning-card>
+        <h1 slot="title" class="slds-text-heading_large">{labels.configureProductsLabel}</h1>
+
+        <template lwc:if={initialized}>
+            <lightning-accordion active-section-name={com}>
+                <template lwc:if={wantPower}>
+                    <lightning-accordion-section name="EE" label={labels.configurePowerLabel}>
+                        <c-pd-product commodity-type="EE" onchangestate={handleStateChange}
+                            onproductready={handleCpmReady} is-edit={isEdit}></c-pd-product>
+                    </lightning-accordion-section>
+                </template>
+                <template lwc:if={wantGas}>
+                    <lightning-accordion-section name="GAS" label={labels.configureGasLabel}>
+                        <c-pd-product commodity-type="GAS" onchangestate={handleStateChange}
+                            onproductready={handleCpmReady} is-edit={isEdit}></c-pd-product>
+                    </lightning-accordion-section>
+                </template>
+            </lightning-accordion>
+        </template>
+    </lightning-card>
+</template>
